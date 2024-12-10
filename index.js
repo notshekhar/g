@@ -38,7 +38,7 @@ program
 
             if (type === "file") {
                 // Handle 'file' type
-                const filePath = path.join(__dirname, "src", name)
+                const filePath = path.join(process.cwd(), "src", name)
 
                 await fs.promises.mkdir(path.dirname(filePath), {
                     recursive: true,
@@ -56,7 +56,7 @@ program
             } else {
                 // Handle 'controller', 'service', 'repository', etc.
                 const pluralType = pluralize(type)
-                const baseDir = path.join(__dirname, "src", pluralType)
+                const baseDir = path.join(process.cwd(), "src", pluralType)
                 const filePath = path.join(baseDir, `${name}.${type}.ts`)
 
                 await fs.promises.mkdir(baseDir, { recursive: true })
