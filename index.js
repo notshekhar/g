@@ -2,6 +2,7 @@
 const { Command } = require("commander")
 const fs = require("node:fs")
 const path = require("path")
+const packageJson = require("./package.json")
 
 function pluralize(word) {
     // If word ends in y and the letter before y is a consonant
@@ -16,11 +17,19 @@ function pluralize(word) {
     return word + "s"
 }
 
-const program = new Command()
+const program = new Command({ version: false })
 
 program
     .name("g")
-    .description("Generate files for your project")
+    .version(packageJson.version, "-v, --version", "Output the current version")
+    .description(
+        "Generate files for your project\n\n" +
+            "Supported types:\n" +
+            "  - controller: Creates a new controller file\n" +
+            "  - service: Creates a new service file\n" +
+            "  - repository: Creates a new repository file\n" +
+            "  - file: Creates a custom file at specified path"
+    )
     .argument(
         "<type>",
         "Type of the file (controller, service, repository, or file)"
@@ -28,6 +37,16 @@ program
     .argument(
         "<name>",
         "Name of the file (for file type, provide full path with extension)"
+    )
+    .addHelpText(
+        "after",
+        `
+Examples:
+  $ g controller user          # Creates src/controllers/user.controller.ts
+  $ g service auth            # Creates src/services/auth.service.ts
+  $ g repository product      # Creates src/repositories/product.repository.ts
+  $ g file utils/helper.ts   # Creates src/utils/helper.ts
+    `
     )
     .action(async (type, name) => {
         try {
