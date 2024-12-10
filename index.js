@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const yargs = require("yargs")
+const { Command } = require("commander")
 const fs = require("node:fs")
 const path = require("path")
 
@@ -16,61 +16,62 @@ function pluralize(word) {
     return word + "s"
 }
 
-const argv = yargs
-    .usage("Usage: $0 <type> <name>")
-    .positional("type", {
-        describe: "Type of the file (controller, service, repository, or file)",
-        type: "string",
-    })
-    .positional("name", {
-        describe:
-            "Name of the file (for file type, provide full path with extension)",
-        type: "string",
-    }).argv
+const program = new Command()
 
-const [type, name] = argv._
+program
+    .name("g")
+    .description("Generate files for your project")
+    .argument(
+        "<type>",
+        "Type of the file (controller, service, repository, or file)"
+    )
+    .argument(
+        "<name>",
+        "Name of the file (for file type, provide full path with extension)"
+    )
+    .action(async (type, name) => {
+        try {
+            if (!type || !name) {
+                console.error("Error: Both type and name must be provided.")
+                process.exit(1)
+            }
 
-async function createFileOrFolder() {
-    try {
-        if (!type || !name) {
-            console.error("Error: Both type and name must be provided.")
+            if (type === "file") {
+                // Handle 'file' type
+                const filePath = path.join(__dirname, "src", name)
+
+                await fs.promises.mkdir(path.dirname(filePath), {
+                    recursive: true,
+                })
+                if (fs.existsSync(filePath)) {
+                    console.error(`Error: File "${filePath}" already exists.`)
+                    process.exit(1)
+                }
+
+                await fs.promises.writeFile(
+                    filePath,
+                    `// File: ${path.basename(filePath)}`
+                )
+                console.log(`Created: ${filePath}`)
+            } else {
+                // Handle 'controller', 'service', 'repository', etc.
+                const pluralType = pluralize(type)
+                const baseDir = path.join(__dirname, "src", pluralType)
+                const filePath = path.join(baseDir, `${name}.${type}.ts`)
+
+                await fs.promises.mkdir(baseDir, { recursive: true })
+                if (fs.existsSync(filePath)) {
+                    console.error(`Error: File "${filePath}" already exists.`)
+                    process.exit(1)
+                }
+
+                await fs.promises.writeFile(filePath, `// ${type}: ${name}`)
+                console.log(`Created: ${filePath}`)
+            }
+        } catch (err) {
+            console.error("Error:", err.message)
             process.exit(1)
         }
+    })
 
-        if (type === "file") {
-            // Handle 'file' type
-            const filePath = path.join(__dirname, "src", name)
-
-            await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
-            if (fs.existsSync(filePath)) {
-                console.error(`Error: File "${filePath}" already exists.`)
-                process.exit(1)
-            }
-
-            await fs.promises.writeFile(
-                filePath,
-                `// File: ${path.basename(filePath)}`
-            )
-            console.log(`Created: ${filePath}`)
-        } else {
-            // Handle 'controller', 'service', 'repository', etc.
-            const pluralType = pluralize(type)
-            const baseDir = path.join(__dirname, "src", pluralType)
-            const filePath = path.join(baseDir, `${name}.${type}.ts`)
-
-            await fs.promises.mkdir(baseDir, { recursive: true })
-            if (fs.existsSync(filePath)) {
-                console.error(`Error: File "${filePath}" already exists.`)
-                process.exit(1)
-            }
-
-            await fs.promises.writeFile(filePath, `// ${type}: ${name}`)
-            console.log(`Created: ${filePath}`)
-        }
-    } catch (err) {
-        console.error("Error:", err.message)
-        process.exit(1)
-    }
-}
-
-createFileOrFolder()
+program.parse()

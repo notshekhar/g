@@ -12,6 +12,6 @@
         "g": "index.js"
     },
     "dependencies": {
-        "yargs": "^17.7.2"
+        "commander": "^12.1.0"
     }
 }
